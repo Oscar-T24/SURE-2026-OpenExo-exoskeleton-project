@@ -127,7 +127,7 @@ typedef struct CAN_message_t {
 */
 
 void loop() {
-  comm_can_set_duty(5, 0.20f); // change 5 to whatever the motor ID is. How can we find it ? 
+  comm_can_set_duty(5, 0.20f); // change 5 to whatever the motor ID is. How can we find it ?
   delay(100);
 }
 
