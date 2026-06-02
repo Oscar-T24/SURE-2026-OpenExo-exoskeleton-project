@@ -40,8 +40,8 @@ void setup()
     digitalWrite(CS, HIGH);
 
     Serial.println("AMT20 Encoder Test");
-    Serial.println("y = start streaming");
-    Serial.println("n = stop streaming");
+    Serial.println("y = start running encoder");
+    Serial.println("n = stop running");
     Serial.println("z = set current position as zero");
 }
 
@@ -55,12 +55,12 @@ void loop()
         if (c == 'y')
         {
             running = true;
-            Serial.println("Streaming started");
+            Serial.println("Encoder run started");
         }
         else if (c == 'n')
         {
             running = false;
-            Serial.println("Streaming stopped");
+            Serial.println("Encoder run stopped");
         }
         else if (c == 'z')
         {
