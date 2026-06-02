@@ -1,4 +1,7 @@
-// Modified sample AMT20 Encoder Arduino Code
+// Modified sample AMT20 Encoder Arduino Code that returns absolute position count, relative position count and relative angle
+// Type y to start running encoder
+// Type n to stop running encoder
+// Type z to set current position as zero
 
 #include <SPI.h>
 
