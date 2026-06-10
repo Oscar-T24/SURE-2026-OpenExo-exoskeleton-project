@@ -1,29 +1,42 @@
-//
-// Created by Oscar Tesniere on 04/06/2026.
-//
+/*
+CANWrite
 
-// inspired from the Arduino CAN article : https://docs.arduino.cc/learn/communication/can/
+  Write and send CAN Bus messages
 
+  See the full documentation here:
+  https://docs.arduino.cc/tutorials/uno-r4-wifi/can
+*/
 
-#include <Arduino_CAN.h>
+/**************************************************************************************
+ * INCLUDE
+ **************************************************************************************/
 #include <Arduino.h>
+#include <Arduino_CAN.h>
 
-// This script will send standard frames to another MCU on the CAN bus every second
+/**************************************************************************************
+ * CONSTANTS
+ **************************************************************************************/
 
-static uint32_t msg_cnt = 0;
+static uint32_t const CAN_ID = 0x20;
 
+/**************************************************************************************
+ * SETUP/LOOP
+ **************************************************************************************/
 
-void setup(){
+void setup()
+{
     Serial.begin(115200);
-    delay(1000);
-    Serial.println("Starting CAN communication");
+    while (!Serial) { }
+
     if (!CAN.begin(CanBitRate::BR_250k))
     {
         Serial.println("CAN.begin(...) failed.");
         for (;;) {}
     }
-
 }
+
+static uint32_t msg_cnt = 0;
+
 void loop()
 {
     /* Assemble a CAN message with the format of
@@ -40,12 +53,12 @@ void loop()
     {
         Serial.print  ("CAN.write(...) failed with error code ");
         Serial.println(rc);
-        for (;;) { }
+        delay(1000);
     }
 
     /* Increase the message counter. */
     msg_cnt++;
 
     /* Only send one message per second. */
-    delay(1000);
+    delay(5000);
 }

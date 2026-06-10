@@ -26,7 +26,7 @@ static constexpr uint8_t setZeroPosition[8] = {
     0xFF, 0xFF, 0xFF, 0xFF,
     0xFF, 0xFF, 0xFF, 0xFE
 };
-static constexpr uint8_t MOTOR_ID = 0x01;
+static constexpr uint8_t MOTOR_ID = 0x02;
 // send this command to CANTX to turn the motor into active motor mode first!
 //
 typedef struct {
@@ -232,7 +232,7 @@ MotorReply unpack_reply(const uint8_t rx_buf[8])
 
 float uint_to_float(uint16_t x, float x_min, float x_max, int bits)
 {
-// how does the conversion work ?
+
     float span = x_max - x_min;
     float max_int = (float)((1UL << bits) - 1);
     return ((float)x * span / max_int) + x_min;
@@ -297,28 +297,38 @@ void loop()
     read_and_print_can_frames();
 
     static float p_target = 0.0f;
+    static int direction = 1;
+
     uint8_t tx_buf[8];
 
-    p_target += 0.001f;
+    // Small back-and-forth movement around zero
+    p_target += direction * 0.05f;
 
     if (p_target > 1.0f)
     {
-        p_target = 1.0f;
+        direction = -1;
+    }
+    else if (p_target < -1.0f)
+    {
+        direction = 1;
     }
 
     pack_cmd(
         tx_buf,
-        p_target,
-        0.0f,
-        20.0f,
-        1.0f,
-        0.0f
+        0.0f,  // position target
+        5.0f,      // velocity target
+        0.0f,     // kp, start lower than 20
+        0.9f,      // kd
+        0.0f       // feedforward torque
     );
 
     CanMsg const msg(CanStandardId(MOTOR_ID), 8, tx_buf);
-    CAN.write(msg);
 
-    delay(10);
+    if (int const rc = CAN.write(msg); rc < 0)
+    {
+        Serial.print("CAN.write(...) failed with error code ");
+        Serial.println(rc);
+    }
 
-    read_and_print_can_frames();
+    delay(5); // 200 Hz command rate
 }

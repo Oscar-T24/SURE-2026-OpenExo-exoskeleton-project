@@ -20,7 +20,7 @@ constexpr int MISO = 12;
 #endif
 */
 
-constexpr unsigned long timeout = 200;
+constexpr unsigned long timeout = 300;
 // what's the added value of constexpr vs const ?
 
 // command bytes
@@ -36,7 +36,7 @@ void setup(){
     pinMode(CS_RIGHT, OUTPUT);
     pinMode(CS_LEFT, OUTPUT);
     SPI.begin();
-    SPI.beginTransaction(SPISettings(500000, MSBFIRST, SPI_MODE0));
+    SPI.beginTransaction(SPISettings(10000, MSBFIRST, SPI_MODE0));
 
     // idle the encoders
     digitalWrite(CS_LEFT, HIGH);
@@ -62,7 +62,7 @@ uint8_t SPIWrite(uint8_t sendByte, bool isLeft=true) // by default left
 uint16_t getEncoderPosition(bool isLeft=true){
     unsigned long start = millis();
     SPIWrite(rd_pos,isLeft);
-    delayMicroseconds(10);
+    delayMicroseconds(100);
     // is it better to use a numeric counter here ?
     while(SPIWrite(nop,isLeft) != rd_pos && millis() - start < timeout){
     }
@@ -78,12 +78,12 @@ uint16_t getEncoderPosition(bool isLeft=true){
 void loop(){
 // send the rd_pos command and wait till it receives the command back
 uint16_t encoder_left = getEncoderPosition(true);
-uint16_t encoder_right = getEncoderPosition(false);
+//uint16_t encoder_right = getEncoderPosition(false);
 Serial.print("Left encoder ");
-Serial.print(encoder_left, DEC);
-Serial.print(",");
-Serial.print("Right encoder ");
-Serial.println(encoder_right, DEC);
+Serial.println(encoder_left, DEC);
+//Serial.print(",");
+//Serial.print("Right encoder ");
+//Serial.println(encoder_right, DEC);
 // Open Serial Plotter to visualize
 }
 
