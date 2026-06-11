@@ -4,26 +4,43 @@
 
 // This script will read the voltage from both load cells and print it on the Arduino Serial Monitor
 
-#define LOAD_CELL_R A0 // right load cell output voltage pin
-#define LOAD_CELL_L A1 // left load cell output voltage pin
+/*
+https://docs.arduino.cc/language-reference/en/functions/analog-io/analogReference/
+5.0 V reference:  5.0 / 16383  = 0.305 mV per count
+1.5 V reference:  1.5 / 16383  = 0.092 mV per count
 
-void setup(){
-// no need to set those pins as input here
-analogReadResolution(14); // set ADC resolution to 14 bits
-Serial.begin(115200);
-Serial.println("Starting load cell voltage reader");
+Thus setting the internal ADC reference to 1.5V increases the resolution by 3.3x !!
+*/
+#include <Arduino.h>
+
+#define LOAD_CELL_R A0
+#define LOAD_CELL_L A1
+
+constexpr float voltage_scale = 1.5f;
+constexpr uint16_t adc_resolution_bits = 14;
+constexpr uint32_t adc_max_value = (1UL << adc_resolution_bits) - 1;
+
+void setup() {
+    analogReadResolution(adc_resolution_bits); // enable 14 bits resolution
+    analogReference(AR_INTERNAL); // set the internal 1.5V reference
+    Serial.begin(115200);
+    Serial.println("Starting load cell voltage reader");
 }
 
-void loop(){
+void loop() {
+    uint16_t left_raw = analogRead(LOAD_CELL_L);
+    uint16_t right_raw = analogRead(LOAD_CELL_R);
 
-unsigned float left_lc = analogRead(LOAD_CELL_L);
-unsigned float right_lc = analogRead(LOAD_CELL_R);
-Serial.print("Left load cell :");
-Serial.print(left_lc);
-Serial.print(",");
-Serial.print("Right load cell :");
-Serial.println(right_lc);
+    float left_voltage = left_raw * voltage_scale / adc_max_value;
+    float right_voltage = right_raw * voltage_scale / adc_max_value;
 
-delay(200); // 5Hz update
+    Serial.print("Left load cell: ");
+    Serial.print(left_voltage, 4);
+    Serial.print(" V, ");
+
+    Serial.print("Right load cell: ");
+    Serial.print(right_voltage, 4);
+    Serial.println(" V");
+
+    delay(200); // 200Hz update
 }
-

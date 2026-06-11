@@ -93,16 +93,16 @@ void read_and_print_can_frames()
             Serial.print("  motor id: ");
             Serial.print(reply.can_id);
 
-            Serial.print(" pos: ");
+            Serial.print(" pos (rad?): ");
             Serial.print(reply.position, 4);
 
-            Serial.print(" vel: ");
+            Serial.print(" vel(rad/s?): ");
             Serial.print(reply.velocity, 4);
 
-            Serial.print(" trq: ");
+            Serial.print(" trq(N*m): ");
             Serial.print(reply.torque, 4);
 
-            Serial.print(" temp: ");
+            Serial.print(" temp (C): ");
             Serial.print(reply.temperature);
 
             Serial.print(" err: ");
@@ -230,22 +230,19 @@ MotorReply unpack_reply(const uint8_t rx_buf[8])
     return reply;
 }
 
-float uint_to_float(uint16_t x, float x_min, float x_max, int bits)
+float uint_to_float(uint16_t code, float x_min, float x_max, int bits)
 {
 
     float span = x_max - x_min;
-    float max_int = (float)((1UL << bits) - 1);
-    return ((float)x * span / max_int) + x_min;
+    float max_int = (float)(((unsigned long)1<< bits) - 1);
+    return ((float)code * span / max_int) + x_min;
 }
 
 uint16_t float_to_uint(float x, float x_min, float x_max, int bits)
 {
     float span = x_max - x_min;
-    float max_int = (float)((1UL << bits) - 1);
-
-    x = constrain_float(x, x_min, x_max);
-
-    return (uint16_t)((x - x_min) * max_int / span);
+    float max_int = (float)(((unsigned long)1 << bits) -1);
+    return (uint16_t)((x-x_min)* max_int / span);
 }
 float constrain_float(float x, float x_min, float x_max)
 {
