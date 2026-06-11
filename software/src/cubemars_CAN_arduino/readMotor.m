@@ -1,7 +1,8 @@
-% Type readMotor("torque") or readMotor("velocity")
+% Type readMotor("torque") or readMotor("velocity") to start plotting
+% Type delete(serialportfind)
 
 
-%------------------START MOTOR TESTING-------------------------
+%----------------------START MOTOR TESTING-----------------------------
 
 function readMotor(signalToPlot) % signalToPlot can be "torque" or "velocity"
 
@@ -9,7 +10,7 @@ function readMotor(signalToPlot) % signalToPlot can be "torque" or "velocity"
 delete(serialportfind);
 
 % Connect to Arduino
-serialObj = serialport("COM7", 115200); % Adjust COM channel and baud rate as needed
+serialObj = serialport("COM3", 115200); % Adjust COM channel and baud rate as needed
 configureTerminator(serialObj,"LF");
 flush(serialObj);
 
@@ -43,8 +44,8 @@ ylabel(yaxis);
 title(plotTitle);
 grid on;
 
-serialObj.UserData.h = h
-serialObj.UserData.StartTime = tic
+serialObj.UserData.h = h;
+serialObj.UserData.StartTime = tic;
 fig.CloseRequestFcn = @(~,~)stopPlot(serialObj, fig);
 
 % Read serial lines output from motor
