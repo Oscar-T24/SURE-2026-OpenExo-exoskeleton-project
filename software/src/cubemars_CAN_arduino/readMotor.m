@@ -1,10 +1,26 @@
 % Type readMotor("torque") or readMotor("velocity") to start plotting
 % Type delete(serialportfind)
 
+% ---------------------Set MIT Mode Parameters----------------------------
+
+pos = 0.0;
+vel = 0.0;
+kd = 0.0;
+trq = 0.0;
 
 %----------------------START MOTOR TESTING-----------------------------
 
 function readMotor(signalToPlot) % signalToPlot can be "torque" or "velocity"
+
+% Send MIT Mode Parameters to Arduino Serial
+writeline(serialObj, "pos");
+writeline(serialObj, pos);
+writeline(serialObj, "vel");
+writeline(serialObj, vel);
+writeline(serialObj, "kd");
+writeline(serialObj, kd);
+writeline(serialObj, "trq");
+writeline(serialObj, trq);
 
 % Remove current serial objects from memory
 delete(serialportfind);
