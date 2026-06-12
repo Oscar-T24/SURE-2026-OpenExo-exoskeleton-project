@@ -111,9 +111,10 @@ Data[7]:          error code
 */
    MotorReply reply;
 
-   reply.can_id = (CAN_eid & 0xFF00) >> 8;
-   reply.func_id = (CAN_eid & 0x00FF);
+   reply.func_id = (CAN_eid >> 8) & 0x1FFFFF;  // upper 21 bits
+   reply.can_id  = CAN_eid & 0xFF;             // lower 8 bits
    // the order is not sure. If it doesn't make sense swap them
+   //TODO make sure that this is the correct way to obtain func ID and motor ID
    Serial.print("Received FUNCTION_ID  :");
    Serial.print(reply.func_id);
    Serial.print("  Received CAN_ID  :");
@@ -215,6 +216,10 @@ void loop() {
          Serial.print(reply.current);
          Serial.print("  temperature (C)  ");
          Serial.println(reply.temperature);
+      }
+      else {
+         Serial.print("Invalid message of length ");
+         Serial.print(rxMsg.data_length);
       }
    }
    // Then send a command to set position to say 180 degrees positive
