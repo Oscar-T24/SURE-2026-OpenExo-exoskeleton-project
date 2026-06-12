@@ -63,7 +63,7 @@ typedef struct {
    float v_min,v_max;
    float i_min,i_max;
    float t_min,t_max;
-   float pwm_min,pwm_max;
+   float duty_min,duty_max;
    // §put the parameters here
 
 } AK60Params;
@@ -159,21 +159,21 @@ void int32_to_4byte(uint8_t *buf, uint32_t input_int)
 }
 
 
-void can_set_duty(uint8_t motor_id, float duty) {
+bool can_set_duty(uint8_t motor_id, float duty) {
    uint8_t data_buf[4];
    int32_to_4byte(data_buf,float_to_uint((float) duty * DUTY_SCALE,motorParams.duty_min,motorParams.duty_max,32));
    CanMsg const msg_duty(CanExtendedId(motor_id | ((uint32_t)CAN_PACKET_SET_DUTY << 8)), sizeof(data_buf), data_buf);
    return CAN.write(msg_duty) >= 0; // true if succeds
 }
 
-void can_set_current(uint8_t motor_id, float current) {
+bool can_set_current(uint8_t motor_id, float current) {
    uint8_t data_buf[4];
    int32_to_4byte(data_buf,float_to_uint((float) current * CURRENT_SCALE,motorParams.i_min,motorParams.i_max,32));
    CanMsg const msg_current(CanExtendedId(motor_id | ((uint32_t)CAN_PACKET_SET_CURRENT << 8)), sizeof(data_buf), data_buf);
    return CAN.write(msg_current) >= 0; // true if succeds
 }
 
-void can_set_position(uint8_t motor_id, float position) {
+bool can_set_position(uint8_t motor_id, float position) {
    uint8_t data_buf[4];
    int32_to_4byte(data_buf,float_to_uint((float) position * POSITION_SCALE,motorParams.p_min,motorParams.p_max,32));
    CanMsg const msg_position(CanExtendedId(motor_id | ((uint32_t)CAN_PACKET_SET_POS << 8)), sizeof(data_buf), data_buf);
@@ -205,7 +205,7 @@ void loop() {
       CanMsg const rxMsg = CAN.read();
 
       if (rxMsg.data_length == 8) {
-         MotorReply reply = unpack_reply(rxMsg.data);
+         MotorReply reply = unpack_reply(rxMsg.getExtendedId() & 0xFFFF,rxMsg.data);
          Serial.print("  motor id  ");
          Serial.print(reply.can_id);
          Serial.print("  pos (deg)  ");
@@ -224,3 +224,42 @@ void loop() {
    }
    // Then send a command to set position to say 180 degrees positive
 }
+
+/*
+src\can_comm_arduino_servo\main.cpp: In function 'void can_set_duty(uint8_t, float)':
+src\can_comm_arduino_servo\main.cpp:163:80: error: 'const struct AK60Params' has no member named 'duty_min'; did you mean 't_min'?
+    int32_to_4byte(data_buf,float_to_uint((float) duty * DUTY_SCALE,motorParams.duty_min,motorParams.duty_max,32));
+                                                                                ^~~~~~~~
+                                                                                t_min
+src\can_comm_arduino_servo\main.cpp:163:101: error: 'const struct AK60Params' has no member named 'duty_max'; did you mean 't_max'?
+    int32_to_4byte(data_buf,float_to_uint((float) duty * DUTY_SCALE,motorParams.duty_min,motorParams.duty_max,32));
+                                                                                                     ^~~~~~~~
+                                                                                                     t_max
+src\can_comm_arduino_servo\main.cpp:165:34: error: return-statement with a value, in function returning 'void' [-fpermissive]
+    return CAN.write(msg_duty) >= 0; // true if succeds
+                                  ^
+src\can_comm_arduino_servo\main.cpp: In function 'void can_set_current(uint8_t, float)':
+src\can_comm_arduino_servo\main.cpp:172:37: error: return-statement with a value, in function returning 'void' [-fpermissive]
+    return CAN.write(msg_current) >= 0; // true if succeds
+                                     ^
+src\can_comm_arduino_servo\main.cpp: In function 'void can_set_position(uint8_t, float)':
+src\can_comm_arduino_servo\main.cpp:179:38: error: return-statement with a value, in function returning 'void' [-fpermissive]
+    return CAN.write(msg_position) >= 0; // true if succeds
+                                      ^
+src\can_comm_arduino_servo\main.cpp: In function 'void loop()':
+src\can_comm_arduino_servo\main.cpp:207:52: error: invalid conversion from 'const uint8_t* {aka const unsigned char*}' to 'uint16_t {aka short unsigned int}' [-fpermissive]
+          MotorReply reply = unpack_reply(rxMsg.data);
+                                                    ^
+src\can_comm_arduino_servo\main.cpp:207:52: error: too few arguments to function 'MotorReply unpack_reply(uint16_t, const uint8_t*)'
+src\can_comm_arduino_servo\main.cpp:98:12: note: declared here
+ MotorReply unpack_reply(const uint16_t CAN_eid,const uint8_t data_buf[8]){
+            ^~~~~~~~~~~~
+Compiling .pio\build\arduino_can_cubemars_servo\FrameworkArduino\Serial.cpp.o
+Compiling .pio\build\arduino_can_cubemars_servo\FrameworkArduino\SerialObj1.cpp.o
+*** [.pio\build\arduino_can_cubemars_servo\src\can_comm_arduino_servo\main.cpp.o] Error 1
+==================================================================================================== [FAILED] Took 3.84 seconds ====================================================================================================
+
+Environment                 Status    Duration
+--------------------------  --------  ------------
+arduino_can_cubemars_servo  FAILED    00:00:03.838
+ */
