@@ -4,7 +4,7 @@
 % -----------------2 Load cells Testing ----------------------
 % Type in readLoadcell("left") or readLoadcell("right") to plot voltage over time
 
-function readLoadcell(side) % choose between left and right load cell
+function readLoadcell(sideToPlot) % choose between left and right load cell
 
 % Remove current serial objects from memory
 delete(serialportfind);
