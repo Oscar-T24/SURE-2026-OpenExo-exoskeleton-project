@@ -1,7 +1,4 @@
-% This code is in the exact same format as the one for cubemars_CAN_arduino 
-% Written on 6/12/2026 
-
-% -----------------2 Load cells Testing ----------------------
+% -----------------------2 Load cells Testing -----------------------------
 % Type in readLoadcell("left") or readLoadcell("right") to plot voltage over time
 
 function readLoadcell(sideToPlot) % choose between left and right load cell
@@ -10,7 +7,7 @@ function readLoadcell(sideToPlot) % choose between left and right load cell
 delete(serialportfind);
 
 % Connect to Arduino
-serialObj = serialport("COM3", 115200); % Adjust COM channel and baud rate as needed
+serialObj = serialport("COM7", 115200); % Adjust COM channel and baud rate as needed
 configureTerminator(serialObj,"LF");
 flush(serialObj);
 
@@ -38,7 +35,7 @@ end
 
 fig = figure;
 
-h = animatedline("Linewidth", 2);
+h = animatedline("Linewidth", 1.5);
 xlabel("Time (s)");
 ylabel(yaxis);
 title(plotTitle);
@@ -63,7 +60,7 @@ sideToPlot = src.UserData.SideToPlot;
 
 if sideToPlot == "left"
     value = getValueOfSideToPlot(words, "Left");
-elseif signalToPlot == "right"
+elseif sideToPlot == "right"
     value = getValueOfSideToPlot(words, "Right:");
 else
     return;
@@ -77,15 +74,15 @@ drawnow limitrate;
 
 end
 
-function value = getValueOfSideToPlot(words, wordToFind)
+function voltage = getValueOfSideToPlot(words, wordToFind)
 
 index = find(words == wordToFind, 1);
 
-% Can add if statements about cases where the word is not found and when it
-% is the last word, but it should not happen
+% Error can happen if the format in which the serial outputs both load cell
+% voltages is changed
 
 valueText = words(index + 3);
-value = str2double(valueText);
+voltage = str2double(valueText);
 end
 
 
