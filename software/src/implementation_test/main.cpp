@@ -17,8 +17,8 @@
 #include <FlexCAN_T4.h>
 #include <SPI.h>
 
-constexpr int CSB_L  = 0;
-constexpr int CSB_R = 9;
+constexpr int CS_LEFT  = 10;
+constexpr int CS_RIGHT = 9;
 
 // SPI pins : using SPI1 port (do a test before with the Arduino slave / Teensy Master code)
 constexpr int SCK1 = 27;
@@ -364,7 +364,7 @@ void handle_serial_line(String line) {
     }
 
     if (!had_error) {
-      print_logging_state();
+      //print_logging_state();
     }
 
     return;
@@ -515,7 +515,7 @@ uint16_t getEncoderPosition(bool isLeft=true){
  while(SPIWrite(nop,isLeft) != rd_pos && millis() - start < timeout){
  }
  if(millis() - start >= timeout){
-  Serial.println("Error reading encoder");
+  //Serial.println("Error reading encoder");
   return 0x0000; // return dummy 0 and move on
  }
  uint16_t encoder_position = (SPIWrite(nop,isLeft) & 0x0F) << 8; // read the first 4 bits, shift them up to make room for the next byte (lower eight bits)
@@ -524,12 +524,12 @@ uint16_t getEncoderPosition(bool isLeft=true){
 }
 
 void setup() {
- pinMode(CSB_L,OUTPUT);
- pinMode(CSB_R,OUTPUT);
+ pinMode(CS_LEFT,OUTPUT);
+ pinMode(CS_RIGHT,OUTPUT);
 
  // IDLE both encoders by setting their Chip Select to high
- digitalWrite(CSB_L, HIGH);
- digitalWrite(CSB_R, HIGH);
+ digitalWrite(CS_LEFT, HIGH);
+ digitalWrite(CS_RIGHT, HIGH);
 
  Serial.begin(115200);
  while (!Serial && millis() < 3000) {}
@@ -578,13 +578,17 @@ void setup() {
 
 }
 
+uint16_t(* get_value())(bool) {
+    return getEncoderPosition;
+}
+
 void loop() {
  read_serial_commands();
  // the loop continuously polls the values from the different sensors while printing, on request, these data periodicaly
 
  // query the encoder positions
  uint16_t encoder_left = getEncoderPosition(true);
- uint16_t encoder_right = getEncoderPosition(false);
+ uint16_t encoder_right = get_value()(false);
  uint16_t left_lc_1_raw = analogRead(LC_L_1);
  uint16_t left_lc_2_raw = analogRead(LC_L_2);
  uint16_t right_lc_1_raw = analogRead(LC_R_1);
@@ -627,7 +631,7 @@ void loop() {
    Serial.print(" , ");
   }
   if (motors) {
-   read_and_print_can_frames();
+   //read_and_print_can_frames();
   }
   // Then make sure to flush :
   Serial.println();

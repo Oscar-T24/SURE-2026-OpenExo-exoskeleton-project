@@ -18,7 +18,7 @@
 #define set_zero_point 0x70
 
 // Chip select pin
-const int CS = 10;
+const int ENCODER_CS = 0;
 
 // Control flags
 bool running = false;
@@ -57,14 +57,14 @@ void setup()
 {
     Serial.begin(baudRate);
 
-    pinMode(SCK, OUTPUT);
-    pinMode(MOSI, OUTPUT);
-    pinMode(MISO, INPUT);
-    pinMode(CS, OUTPUT);
-    SPI.begin();
-    digitalWrite(CS, HIGH);
-    SPI.beginTransaction(
-        SPISettings(500000, MSBFIRST, SPI_MODE0));
+    //pinMode(SCK, OUTPUT);
+    //pinMode(MOSI, OUTPUT);
+    //pinMode(MISO, INPUT);
+    pinMode(ENCODER_CS, OUTPUT);
+    SPI1.begin();
+    digitalWrite(ENCODER_CS, HIGH);
+    SPI1.beginTransaction(
+        SPISettings(1000000, MSBFIRST, SPI_MODE0));
 
 
 
@@ -138,11 +138,13 @@ uint8_t SPIWrite(uint8_t sendByte)
 {
     uint8_t data;
 
-    digitalWrite(CS, LOW);
-    data = SPI.transfer(sendByte);
-    digitalWrite(CS, HIGH);
+    digitalWrite(ENCODER_CS, LOW);
+    data = SPI1.transfer(sendByte);
+    digitalWrite(ENCODER_CS, HIGH);
 
     delayMicroseconds(10);
+
+    SPI1.endTransaction();
 
     return data;
 }

@@ -5,10 +5,10 @@
 #include <Arduino.h>
 #include <SPI.h>
 
-constexpr uint8_t CS_PIN = 10;
+constexpr uint8_t CS_PIN = 0;
 
 SPISettings spiSettings(
-    100000,   // 100 kHz, slow and safe for first test
+    1000000,   // 1Mhz
     MSBFIRST,
     SPI_MODE0
 );
@@ -16,23 +16,23 @@ SPISettings spiSettings(
 uint8_t counter = 0;
 
 uint8_t spi_transfer_byte(uint8_t value) {
-    SPI.beginTransaction(spiSettings);
+    SPI1.beginTransaction(spiSettings);
 
     digitalWrite(CS_PIN, LOW);
     delayMicroseconds(5);
 
     // First byte sends command.
-    SPI.transfer(value);
+    SPI1.transfer(value);
 
     delayMicroseconds(5);
 
     // Second byte clocks back the Arduino's prepared response.
-    uint8_t response = SPI.transfer(0x00);
+    uint8_t response = SPI1.transfer(0x00);
 
     delayMicroseconds(5);
     digitalWrite(CS_PIN, HIGH);
 
-    SPI.endTransaction();
+    SPI1.endTransaction();
 
     return response;
 }
@@ -44,7 +44,7 @@ void setup() {
     pinMode(CS_PIN, OUTPUT);
     digitalWrite(CS_PIN, HIGH);
 
-    SPI.begin();
+    SPI1.begin();
 
     Serial.println("Teensy SPI master started");
 }

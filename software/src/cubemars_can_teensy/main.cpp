@@ -373,7 +373,7 @@ void setup() {
     Serial.println("Initializing FlexCAN_T4...");
 
     myCan.begin();
-    myCan.setBaudRate(1000000);
+    myCan.setBaudRate(500000);//myCan.setBaudRate(1000000);
     myCan.setMaxMB(16);
     myCan.enableFIFO();
     myCan.enableFIFOInterrupt();

@@ -20,7 +20,7 @@ constexpr int MISO = 12;
 #endif
 */
 
-constexpr unsigned long timeout = 300;
+constexpr unsigned long timeout = 200;
 // what's the added value of constexpr vs const ?
 
 // command bytes
@@ -65,7 +65,7 @@ uint16_t getEncoderPosition(bool isLeft=true){
     while(SPIWrite(nop,isLeft) != rd_pos && millis() - start < timeout){
     }
     if(millis() - start >= timeout){
-        Serial.println("Error reading encoder");
+        //Serial.println("Error reading encoder");
         return 0x0000; // return dummy 0 and move on
     }
     uint16_t encoder_position = (SPIWrite(nop,isLeft) & 0x0F) << 8; // read the first 4 bits, shift them up to make room for the next byte (lower eight bits)
@@ -75,7 +75,7 @@ uint16_t getEncoderPosition(bool isLeft=true){
 
 void loop(){
 // send the rd_pos command and wait till it receives the command back
-uint16_t encoder_left = getEncoderPosition(true);
+uint16_t encoder_left = getEncoderPosition(false);
 //uint16_t encoder_right = getEncoderPosition(false);
 Serial.print("Left encoder ");
 Serial.println(encoder_left, DEC);

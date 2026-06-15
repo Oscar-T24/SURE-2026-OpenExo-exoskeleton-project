@@ -35,6 +35,12 @@ static constexpr uint8_t setZeroPosition[8] = {
     0xFF, 0xFF, 0xFF, 0xFF,
     0xFF, 0xFF, 0xFF, 0xFE
 };
+
+static constexpr uint8_t neutralMITCommand[8] = {
+    0x7F, 0xFF, 0x7F, 0xF0,
+    0x00, 0x00, 0x07, 0xFF
+};
+
 static constexpr uint8_t MOTOR_ID = 0x02;
 // send this command to CANTX to turn the motor into active motor mode first!
 //
@@ -392,10 +398,24 @@ void loop() {
         if (int const rc = CAN.write(msg); rc < 0) {
             Serial.print("CAN.write(...) failed with error code ");
             Serial.println(rc);
-            Serial.println("Entering motor mode");
-            CanMsg const msg_enter(CanStandardId(MOTOR_ID), sizeof(enterMotorMode), enterMotorMode);
-            CAN.write(msg_enter);
-            delay(1000);
+            // optional: exit motor mode
+            CanMsg const exit_cmd(CanStandardId(MOTOR_ID), 8, exitMotorMode);
+            CAN.write(exit_cmd);
+            delay(200);
+
+            // send neutral MIT command
+            CanMsg const neutral_cmd(CanStandardId(MOTOR_ID), 8, neutralMITCommand);
+            CAN.write(neutral_cmd);
+            delay(200);
+
+            // enter motor mode
+            CanMsg const enter_cmd(CanStandardId(MOTOR_ID), 8, enterMotorMode);
+            CAN.write(enter_cmd);
+            delay(200);
+
+            // send neutral MIT command again
+            CAN.write(neutral_cmd);
+            delay(200);
         }
         lastUpdate = millis();
     }
