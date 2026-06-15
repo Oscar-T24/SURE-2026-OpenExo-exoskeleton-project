@@ -1,20 +1,25 @@
 //
-// Created by Oscar Tesniere on 07/06/2026.
+// Created by Oscar Tesniere on 12/06/2026.
 //
 // this script will attempt to move the motor by small increments in MIT mode
 // based off the CubeMars manual and this video which demoed the MIT mode with an Arduino : https://www.youtube.com/watch?v=UWc_7-8gXeE&t=296s
 
-#include <Arduino_CAN.h>
+#include <FlexCAN_T4.h>
 #include <Arduino.h>
+
+FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> myCan;
+
+// Teensy 4.1 CAN1:
+// RX = pin 23
+// TX = pin 22
 
 String serialLine;
 
-float p_target = 0.0f;
+float p_target = 10.0f;
 float v_target = 0.0f;
-float kp_target = 0.0f;
-float kd_target = 0.0f;
+float kp_target = 0.5f;
+float kd_target = 0.5f;
 float trq_target = 0.0f;
-// MAKE SURE EVERYTHING IS 0 to avoid crashing on startup
 
 // function prototypes to move the function definitions after usage
 float constrain_float(float x, float x_min, float x_max);
@@ -89,34 +94,34 @@ buf[7] : [trq[7-0]]
 // is 0x0F the same as 0xF ? Might be less intuitive when masking 16 bit words
 */
 
-void read_and_print_can_frames()
-{
-    while (CAN.available())
-    {
-        CanMsg const rxMsg = CAN.read();
+void read_and_print_can_frames() {
+    CAN_message_t rxMsg;
 
-        if (rxMsg.data_length == 8)
-        {
-            MotorReply reply = unpack_reply(rxMsg.data);
-
-            Serial.print("  motor id: ");
-            Serial.print(reply.can_id);
-
-            Serial.print(" pos (rad?): ");
-            Serial.print(reply.position, 4);
-
-            Serial.print(" vel(rad/s?): ");
-            Serial.print(reply.velocity, 4);
-
-            Serial.print(" trq(N*m): ");
-            Serial.print(reply.torque, 4);
-
-            Serial.print(" temp (C): ");
-            Serial.print(reply.temperature);
-
-            Serial.print(" err: ");
-            Serial.println(reply.error);
+    while (myCan.read(rxMsg)) {
+        if (rxMsg.len != 8) {
+            //Serial.println("Wrong number");
+            continue;
         }
+
+        MotorReply reply = unpack_reply(rxMsg.buf);
+
+        Serial.print("  motor id: ");
+        Serial.print(reply.can_id);
+
+        Serial.print(" pos(rad): ");
+        Serial.print(reply.position, 4);
+
+        Serial.print(" vel(rad/s): ");
+        Serial.print(reply.velocity, 4);
+
+        Serial.print(" trq(N*m): ");
+        Serial.print(reply.torque, 4);
+
+        Serial.print(" temp(C): ");
+        Serial.print(reply.temperature);
+
+        Serial.print(" err: ");
+        Serial.println(reply.error);
     }
 }
 
@@ -347,62 +352,69 @@ void read_serial_commands() {
     }
 }
 
+
+
+bool send_can8(uint32_t id, const uint8_t data[8]) {
+    CAN_message_t msg;
+    msg.id = id;
+    msg.len = 8;
+    msg.flags.extended = 0; // MIT mode uses standard CAN ID
+
+    memcpy(msg.buf, data, 8);
+
+    int rc = myCan.write(msg);
+    return rc > 0;
+}
+
 void setup() {
     Serial.begin(115200);
-    read_serial_commands();
-    while (!Serial) {}
-    Serial.println("Now initializing CAN communication");
-    if (!CAN.begin(CanBitRate::BR_1000k)) // 1M baudrate
-    {
-        Serial.println("CAN.begin(...) failed.");
-        for (;;) {}
-    }
-    Serial.println("Now leaving Motor Mode");
-    CanMsg const msg_leave(CanStandardId(MOTOR_ID), sizeof(exitMotorMode), exitMotorMode);
-    // first exit motor mode as a safety
-    if (int const rc = CAN.write(msg_leave); rc < 0)
-    {
-        Serial.print  ("CAN.write(...) failed with error code ");
-        Serial.println(rc);
-        for (;;) { }
-    }
-    delay(1000);
-    Serial.println("Now entering Motor Mode");
-    CanMsg const msg_enter(CanStandardId(MOTOR_ID), sizeof(enterMotorMode), enterMotorMode);
-    // first exit motor mode as a saefty
-    if (int const rc = CAN.write(msg_enter); rc < 0)
-    {
-        Serial.print  ("CAN.write(...) failed with error code ");
-        Serial.println(rc);
-        for (;;) { }
+    while (!Serial && millis() < 3000) {}
+
+    Serial.println("Initializing FlexCAN_T4...");
+
+    myCan.begin();
+    myCan.setBaudRate(1000000);
+    myCan.setMaxMB(16);
+    myCan.enableFIFO();
+    myCan.enableFIFOInterrupt();
+
+    Serial.println("CAN ready");
+
+    Serial.println("Exiting MIT motor mode...");
+    if (!send_can8(MOTOR_ID, exitMotorMode)) {
+        Serial.println("exitMotorMode send failed");
     }
 
+    delay(1000);
+
+    Serial.println("Entering MIT motor mode...");
+    if (!send_can8(MOTOR_ID, enterMotorMode)) {
+        Serial.println("enterMotorMode send failed");
+    }
 }
-unsigned long lastUpdate = millis();
-unsigned long updatePeriod = 10;
+unsigned long lastUpdate = 0;
+const unsigned long updatePeriod = 10; // 100 Hz
 
 void loop() {
     read_serial_commands();
     read_and_print_can_frames();
-    uint8_t tx_buf[8];
-    pack_cmd(tx_buf, p_target, v_target, kp_target, kd_target, trq_target);
-    CanMsg const msg(CanStandardId(MOTOR_ID), 8, tx_buf);
 
-    if (millis() - lastUpdate > updatePeriod){
-        if (int const rc = CAN.write(msg); rc < 0) {
-            Serial.print("CAN.write(...) failed with error code ");
-            Serial.println(rc);
-            Serial.println("Entering motor mode");
-            CanMsg const msg_enter(CanStandardId(MOTOR_ID), sizeof(enterMotorMode), enterMotorMode);
-            CAN.write(msg_enter);
-            delay(1000);
-        }
+    if (millis() - lastUpdate >= updatePeriod) {
         lastUpdate = millis();
-    }
-    delay(5); // 200 Hz command rat
-}
 
-// set [one in pos,vel,trq,kd,kp] [value]
-// get [one in pos,vel,trq,kd,kp]
-//torque = kp * position_error + kd * velocity_error + trq_feedforward
-//
+        uint8_t tx_buf[8];
+
+        pack_cmd(
+            tx_buf,
+            p_target,
+            v_target,
+            kp_target,
+            kd_target,
+            trq_target
+        );
+
+        if (!send_can8(MOTOR_ID, tx_buf)) {
+            Serial.println("MIT command send failed");
+        }
+    }
+}

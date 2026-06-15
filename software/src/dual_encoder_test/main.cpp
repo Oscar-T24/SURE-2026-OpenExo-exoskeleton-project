@@ -47,12 +47,10 @@ uint8_t SPIWrite(uint8_t sendByte, bool isLeft=true) // by default left
 {
     //holder for the received over SPI
     uint8_t data;
-
     //the AMT20 requires the release of the CS line after each byte
     digitalWrite(isLeft ? CS_LEFT : CS_RIGHT, LOW);
     data = SPI.transfer(sendByte);
     digitalWrite(isLeft ? CS_LEFT : CS_RIGHT, HIGH);
-
     //we will delay here to prevent the AMT20 from having to prioritize SPI over obtaining our position
     delayMicroseconds(10);
 

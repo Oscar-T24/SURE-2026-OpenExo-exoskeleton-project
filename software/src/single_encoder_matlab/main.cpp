@@ -61,11 +61,11 @@ void setup()
     pinMode(MOSI, OUTPUT);
     pinMode(MISO, INPUT);
     pinMode(CS, OUTPUT);
-
+    SPI.begin();
+    digitalWrite(CS, HIGH);
     SPI.beginTransaction(
         SPISettings(500000, MSBFIRST, SPI_MODE0));
 
-    digitalWrite(CS, HIGH);
 
 
     /*

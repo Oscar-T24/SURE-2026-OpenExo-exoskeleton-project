@@ -22,7 +22,7 @@ constexpr uint32_t adc_max_value = (1UL << adc_resolution_bits) - 1;
 
 void setup() {
     analogReadResolution(adc_resolution_bits); // enable 14 bits resolution
-    analogReference(AR_INTERNAL); // set the internal 1.5V reference
+    analogReference(AR_INTERNAL); // set the internal 1.5V reference : ONLY VALID FOR ARDUINO UNOR4 BOARD
     Serial.begin(115200);
     Serial.println("Starting load cell voltage reader");
 }

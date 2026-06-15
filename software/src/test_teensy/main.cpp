@@ -1,45 +1,37 @@
-//
-// Created by Oscar Tesniere on 01/06/2026.
-//
 #include <Arduino.h>
 
-// Teensy 4.1 basic debug sketch
+constexpr int LED_PIN = LED_BUILTIN;
 
-const int LED_PIN = 13;   // Built-in LED on Teensy 4.1
+unsigned long lastBlinkMs = 0;
+unsigned long lastPrintMs = 0;
+bool ledState = false;
+uint32_t counter = 0;
 
 void setup() {
     pinMode(LED_PIN, OUTPUT);
 
     Serial.begin(115200);
-
-    // Wait briefly for Serial Monitor, but don't hang forever
-    unsigned long start = millis();
-    while (!Serial && millis() - start < 3000) {
-        // wait up to 3 seconds
+    while (!Serial && millis() < 3000) {
+        // Wait briefly for serial monitor, but don't block forever
     }
 
-    Serial.println("Teensy 4.1 debug start");
+    Serial.println("Teensy 4.1 simple test started");
 }
 
 void loop() {
-    static unsigned long lastBlink = 0;
-    static unsigned long lastPrint = 0;
-    static bool ledState = false;
-
     unsigned long now = millis();
 
-    // Blink LED every 500 ms
-    if (now - lastBlink >= 500) {
-        lastBlink = now;
+    if (now - lastBlinkMs >= 200) {
+        lastBlinkMs = now;
+
         ledState = !ledState;
         digitalWrite(LED_PIN, ledState);
     }
 
-    // Print debug info every 1 second
-    if (now - lastPrint >= 1000) {
-        lastPrint = now;
+    if (now - lastPrintMs >= 1000) {
+        lastPrintMs = now;
 
-        Serial.print("Running. millis = ");
-        Serial.println(now);
+        Serial.print("Counter: ");
+        Serial.println(counter++);
     }
 }
