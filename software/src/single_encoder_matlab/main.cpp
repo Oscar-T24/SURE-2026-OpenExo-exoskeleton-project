@@ -2,6 +2,12 @@
 // Type y to start running encoder
 // Type n to stop running encoder
 // Type z to set current position as zero
+/* Arduino Pin Connections
+SPI Clock (SCK): Pin 13
+SPI MOSI:        Pin 11
+SPI MISO:        Pin 12
+SPI Chip Select: Pin 10
+*/
 
 #include <Arduino.h>
 #include <SPI.h>
