@@ -2,7 +2,7 @@
 This code is used to plot the relative angle of one encoder in degrees
 relative to the original position the ankle is at when the test just starts
 
-CLion Terminal Command: python src/single_encoder_matlab/plotEncoder.py
+python src/single_encoder_matlab/plotEncoder.py
 
 Arduino Pin Connection:
 SPI Clock (SCK): Pin 13
@@ -79,7 +79,7 @@ try:
     while (running["in_progress"] == True) and (plt.fignum_exists(fig.number) == True):
         # y-axis data
         value = ser.readline().decode().strip()
-        print(value)
+        print("Angle: " + value)
 
         try:
             angle = float(value)
@@ -103,10 +103,6 @@ try:
         ax.set_xlim(max(0, current_time - time_window), current_time)
         ax.relim()
         ax.autoscale_view(scalex=False, scaley=True)
-
-        line.set_data(time_data, angle_data)
-        ax.relim()
-        ax.autoscale_view()
 
         fig.canvas.draw()
         fig.canvas.flush_events()
