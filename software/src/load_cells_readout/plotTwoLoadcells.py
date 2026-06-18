@@ -1,10 +1,11 @@
 """
 This code plots the voltage output of 2 load cells connected to the analog amplifier board connected to an Arduino board
 The analog count value is converted to voltage on a 5V basis
+This code only works for a readout of the format
 
 The left and right load cells need to be carefully defined to avoid confusion
 
-Type in CLion terminal: python src/load_cells_readout/plotLoadcell.py
+Type in CLion terminal: python software\src\load_cells_readout\plotTwoLoadcells.py
 """
 
 import serial
@@ -12,7 +13,7 @@ import time
 import matplotlib.pyplot as plt
 
 # Arduino Connection
-port = "COM3"
+port = "COM5"
 baud = 115200
 time_window = 15 # For plot x-axis; plot will move horizontally after 15 seconds
 
@@ -75,8 +76,8 @@ try:
         arr = raw.split(" ")
 
         try:
-            left_data = float(arr[3])
-            right_data.append(arr[-1])
+            left_data.append(float(arr[3]))
+            right_data.append(float(arr[-1]))
 
         except ValueError:
             continue
@@ -107,5 +108,5 @@ except KeyboardInterrupt:
     ser.close()
 
 finally:
-    stop_encoder()
+    stop_loadcells()
     plt.close("all")
